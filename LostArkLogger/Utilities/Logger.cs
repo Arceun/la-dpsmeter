@@ -97,8 +97,8 @@ namespace LostArkLogger.Utilities
                 });
             }
         }
-		public static void Run()
-		{
+	public static void Run()
+	{
             while (!stopThread)
             {
                 if (logStream != null && logLines.TryDequeue(out var msg)) {
