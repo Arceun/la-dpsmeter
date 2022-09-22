@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LostArkLogger.Utilities
@@ -15,16 +17,21 @@ namespace LostArkLogger.Utilities
         public static bool debugLog = false;
 
         static BinaryWriter logger;
-        static FileStream logStream;
+        static FileStream debugStream;
+        private static StreamWriter logStream = null;
 
         private static readonly object LogFileLock = new object();
         private static readonly object DebugFileLock = new object();
         public static string fileName = logsPath + "/LostArk_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".log";
         public static DateTime fileDate = DateTime.Now;
+        private static Thread thread = null;
+        private static bool stopThread = false;
 
         static Logger()
         {
             if (!Directory.Exists(logsPath)) Directory.CreateDirectory(logsPath);
+            thread = new Thread(Run);
+            thread.Start();
         }
 
         public static void UpdateLogPath(string customLogPath = default)
@@ -39,15 +46,19 @@ namespace LostArkLogger.Utilities
 
         public static void StartNewLogFile()
         {
+            if (logStream != null) logStream.Close();
             fileName = logsPath + "/LostArk_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".log";
+            logStream = new StreamWriter(fileName, true);
+            logStream.AutoFlush = true;
             fileDate = DateTime.Now;
         }
         public static event Action<string> onLogAppend;
         static bool InittedLog = false;
+        public static ConcurrentQueue<string> logLines = new ConcurrentQueue<string>();
         public static void AppendLog(int id, params string[] elements)
         {
             // check if current day is different then from fileDate
-            if (fileDate.Day != DateTime.Now.Day)
+            if (fileDate.Day != DateTime.Now.Day || logStream == null)
             {
                 StartNewLogFile();
             }
@@ -59,14 +70,9 @@ namespace LostArkLogger.Utilities
             var log = id + "|" + DateTime.Now.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'") + "|" + String.Join("|", elements);
             var logHash = string.Concat(System.Security.Cryptography.MD5.Create().ComputeHash(Encoding.Unicode.GetBytes(log)).Select(x => x.ToString("x2")));
 
-            Task.Run(() =>
-            {
-                lock (LogFileLock)
-                {
-                    File.AppendAllText(fileName, log + "|" + logHash + "\n");
-                }
-
+            Task.Run(() => {
                 onLogAppend?.Invoke(log + "\n");
+                logLines.Enqueue(log + "|" + logHash + "\n");
             });
         }
         public static void DoDebugLog(byte[] bytes)
@@ -82,8 +88,8 @@ namespace LostArkLogger.Utilities
                     {
                         if (logger == null)
                         {
-                            logStream = new FileStream(fileName.Replace(".log", ".bin"), FileMode.Create);
-                            logger = new BinaryWriter(logStream);
+                            debugStream = new FileStream(fileName.Replace(".log", ".bin"), FileMode.Create);
+                            logger = new BinaryWriter(debugStream);
                         }
 
                         logger.Write(log);
@@ -91,5 +97,18 @@ namespace LostArkLogger.Utilities
                 });
             }
         }
+		public static void Run()
+		{
+            while (!stopThread)
+            {
+                if (logStream != null && logLines.TryDequeue(out var msg)) {
+                    logStream.WriteLine(msg);
+                } else
+                {
+                    Thread.Sleep(100);
+                }
+            }
+        }
+
     }
 }
