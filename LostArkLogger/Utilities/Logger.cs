@@ -102,7 +102,7 @@ namespace LostArkLogger.Utilities
             while (!stopThread)
             {
                 if (logStream != null && logLines.TryDequeue(out var msg)) {
-                    logStream.WriteLine(msg);
+                    logStream.Write(msg);
                 } else
                 {
                     Thread.Sleep(100);
