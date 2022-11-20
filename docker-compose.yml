@@ -7,6 +7,6 @@ services:
       dockerfile: Dockerfile
     restart: 'always'
     container_name: logger-rpcap
-    # volumes:
-    #   - ./config.yml:/app/config.yml
-    #   - '~/Documents/Lost Ark Logs:/mnt/raid1/apps/Lost Ark Logs'
+    volumes:
+      - ./config.yml:/app/config.yml
+      - "E:/LOADPS/Logs:/mnt/raid1/apps/Lost Ark Logs"
