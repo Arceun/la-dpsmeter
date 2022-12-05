@@ -225,7 +225,7 @@ namespace LostArkLogger
             return (OpCodes) Enum.Parse(typeof(OpCodes), opCodeString);
         }
 
-        Byte[] XorTableSteam = ObjectSerialize.Decompress(Configuration.ReadXorBinary("xor_Steam.bin"));
+        Byte[] XorTableSteam = Convert.FromBase64String("DgZIHKcHjzVicTApEJcqhC+gJuv5g3PkLCf8Lal73VYgnLKAOs3naIrwmZMaXmPgxDZHSSJglln0HUXWdmaFF5gC3Au30+UZIQ+HuFJTfTu+d3r4EhhfKEKQ3mujoa3Hq2cuxQzjaiSdwzEr/goBtEDVOcAz8kOfWhYFzIFlnkG6T29GTO+JjdHpTjf6fPvxpZJYctu7vKhKRBvZOOyCynjOrG3hpO31royR/SPzoj3IcFGmvcuOA9h1BLZs9+KGHh/UvxX/te5+r88lCN/Jwohu9lez6kvBAGkNmuaxuT8T6FuVMlSbsFA+xmFdXNo8eQnSf3Rk1xSUqjRNEYtV0A==");
 
         //Byte[] XorTableRu = ObjectSerialize.Decompress(Properties.Resources.xor_ru);
         Byte[] XorTableKorea = ObjectSerialize.Decompress(Configuration.ReadXorBinary("xor_Korea.bin"));
@@ -472,7 +472,7 @@ namespace LostArkLogger
                             GearLevel = _localGearLevel
                         };
                         currentEncounter.Entities.AddOrUpdate(tempEntity);
-                        // statusEffectTracker.InitPc(pc);
+                        statusEffectTracker.InitPc(pc);
                         onNewZone?.Invoke();
 
                         if (!currentEncounter.LoggedEntities.ContainsKey(pc.PlayerId))
@@ -485,7 +485,6 @@ namespace LostArkLogger
                                 currHp = pc.statPair.Value[pc.statPair.StatType.IndexOf((Byte) StatType.STAT_TYPE_HP)].ToString();
                                 maxHp = pc.statPair.Value[pc.statPair.StatType.IndexOf((Byte) StatType.STAT_TYPE_MAX_HP)].ToString();
                             } catch {
-                                // Console.WriteLine("Error getting HP for PC (" + pc.PlayerId + ") - Using subPKTInitPC29");
                                 if (pc.subPKTInitPC29s.Count > 0) {
                                     currHp = pc.subPKTInitPC29s[0].p64_0.ToString();
                                     maxHp = currHp;
@@ -518,11 +517,10 @@ namespace LostArkLogger
 
                         currentEncounter.Entities.AddOrUpdate(temp);
                         currentEncounter.PartyEntities[temp.PartyId] = temp;
-                        // statusEffectTracker.NewPc(pcPacket);
+                        statusEffectTracker.NewPc(pcPacket);
 
                         if (!currentEncounter.LoggedEntities.ContainsKey(pc.PlayerId))
                         {
-
                             var gearScore = BitConverter.ToSingle(BitConverter.GetBytes(pc.GearLevel), 0).ToString("0.##");
                             var currHp = "0";
                             var maxHp = "0";
@@ -531,7 +529,6 @@ namespace LostArkLogger
                                 currHp = pc.statPair.Value[pc.statPair.StatType.IndexOf((Byte) StatType.STAT_TYPE_HP)].ToString();
                                 maxHp = pc.statPair.Value[pc.statPair.StatType.IndexOf((Byte) StatType.STAT_TYPE_MAX_HP)].ToString();
                             } catch {
-                                // Console.WriteLine("Error getting HP for PC (" + pc.PlayerId + ") - Using subPKTInitPC29");
                                 if (pc.subPKTInitPC29s.Count > 0) {
                                     currHp = pc.subPKTInitPC29s[0].p64_0.ToString();
                                     maxHp = currHp;
@@ -561,7 +558,6 @@ namespace LostArkLogger
                             currHp = npc.statPair.Value[npc.statPair.StatType.IndexOf((Byte) StatType.STAT_TYPE_HP)].ToString();
                             maxHp = npc.statPair.Value[npc.statPair.StatType.IndexOf((Byte) StatType.STAT_TYPE_MAX_HP)].ToString();
                         } catch {
-                            // Console.WriteLine("Error getting HP for NPC (" + Npc.GetNpcName(npc.NpcType) + ") - Using subPKTInitPC29");
                             if (npc.subPKTInitPC29s.Count > 0) {
                                 currHp = npc.subPKTInitPC29s[0].p64_0.ToString();
                                 maxHp = currHp;
@@ -569,11 +565,12 @@ namespace LostArkLogger
                         }
 
                         Logger.AppendLog(4, npc.NpcId.ToString("X"), npc.NpcType.ToString(), Npc.GetNpcName(npc.NpcType), currHp, maxHp);
-                        // statusEffectTracker.NewNpc(npcPacket);
+                        statusEffectTracker.NewNpc(npcPacket);
+
                     }
                     else if (opcode == OpCodes.PKTRemoveObject)
                     {
-                        var obj = new PKTRemoveObject(new BitReader(payload));
+                        //var obj = new PKTRemoveObject(new BitReader(payload));
                         //var projectile = new PKTRemoveObject { Bytes = converted };
                         //ProjectileOwner.Remove(projectile.ProjectileId, projectile.OwnerId);
                     }
@@ -746,7 +743,7 @@ namespace LostArkLogger
                     }
 
                 } catch (Exception e) {
-                    Console.WriteLine("Error processing packet: " + opcode.ToString() + " -> " +  e.ToString() );
+                    Console.WriteLine("Error processing packet: " + opcode.ToString() + " -> " +  e.Message);
                 }
 
                 if (packets.Length < packetSize) throw new Exception("bad packet maybe");
@@ -756,7 +753,7 @@ namespace LostArkLogger
 
         UInt32 currentIpAddr = 0xdeadbeef;
         int loggedPacketCount = 0;
-        
+
 
         void Device_OnPacketArrival_pcap(object sender, PacketCapture evt)
         {
