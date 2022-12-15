@@ -1,3 +1,4 @@
+using System;
 namespace LostArkLogger
 {
     public enum OpCodes_Korea : UInt16
@@ -25,5 +26,8 @@ namespace LostArkLogger
         PKTStatusEffectRemoveNotify = 0x1B2F,
         PKTTriggerBossBattleStatus = 0x91B0,
         PKTTriggerStartNotify = 0x17B0,
+        PKTPartyInfo = 4508,
+        PKTPartyLeaveResult = 20450,
+        PKTPartyUnknown = 55319,
     }
 }

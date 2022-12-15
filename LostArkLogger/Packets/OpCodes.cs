@@ -1,3 +1,4 @@
+using System;
 namespace LostArkLogger
 {
     public enum OpCodes : UInt16
@@ -1446,5 +1447,6 @@ namespace LostArkLogger
         PKTAdvRewardRequestResult = 59918,
         PKTFallDownPredictNotify = 59982,
         PKTInitAchievementActive = 59992,
+        PKTPartyStatusEffectResultNotify = 11177,
     }
 }
