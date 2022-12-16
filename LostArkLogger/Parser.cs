@@ -45,7 +45,6 @@ namespace LostArkLogger
         }
 
         // UI needs to be able to ask us to reload our listener based on the current user settings
-        // UI needs to be able to ask us to reload our listener based on the current user settings
         public void InstallListener()
         {
             lock (lockPacketProcessing)
@@ -759,7 +758,9 @@ namespace LostArkLogger
                     try {
                         ProcessPacket(bytes.ToList());
                     } catch (Exception e) {
+#if DEBUG
                         Console.WriteLine("Failure during processing of packet:\n" + e);
+#endif
                     }
                 }
             }
